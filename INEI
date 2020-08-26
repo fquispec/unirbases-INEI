@@ -1,0 +1,28 @@
+rm(list = ls())
+library(survey);library(foreign);library(dplyr);library(expss);library(car);library(reshape2)
+setwd("C:/Users/aleja/Downloads/ENDES");
+filename1<-"RECH0-2008.dbf";
+data1<- read.dbf(file=filename1)
+filename2<-"RECH23-2008.dbf";
+data2<- read.dbf(file=filename2)
+data3=left_join(data1, data2, by = "HHID")
+
+modulo1=data3
+FACTOR=modulo1$HV005A*modulo1$HV012 #(Sample weight x Number of de jure members)
+ANIO=modulo1$HV007
+AREA=modulo1$HV025
+NOMBREDD=modulo1$HV024
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Drinking water----
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#STEP 1: factor de ponderación del país, según INEI (conteos de hogares expandidos)
+w0 <-xtabs(FACTOR~HV205+ANIO+AREA+NOMBREDD, data = modulo1)#water HV201, Sanitation HV205
+w1 <- as.data.frame(w0)
+w2 <- dcast(w1, ANIO + AREA +NOMBREDD~ HV205)
+###################Proportion (2000-2019)
+lw1=w2[,-c(1:3)]
+lf1=data.frame(w2[,c(1:3)],
+                round(prop_row(lw1)*100,3))
+
+
+write.table(lf1, file = "sanit-2008(hv005A).csv",sep=";",row.names = FALSE)
